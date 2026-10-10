@@ -852,10 +852,26 @@ function omenText(){
   return "";
 }
 
+/* build the player list and buttons off-screen, and only swap them in when they actually changed: every "I'm done"
+   from another phone triggers a render, and replacing a button mid-tap swallows the tap on touch screens */
+function swapIn(el, nodes, key){
+  const sig = key + "|" + nodes.map(x => x.outerHTML).join("");
+  if(el.dataset.sig === sig) return;
+  el.dataset.sig = sig; el.replaceChildren(...nodes);
+}
 function renderAction(){
-  const st = stage(), n = nowN(), r = G.role, list = $("#plist"), acts = $("#acts"), alive = aliveIds();
+  const list = document.createElement("div"), acts = document.createElement("div");
+  try { renderActionInto(list, acts); }
+  finally {
+    const key = `${stage()}${nowN()}${G.role}`;
+    swapIn($("#plist"), [...list.childNodes], key);
+    swapIn($("#acts"), [...acts.childNodes], key);
+  }
+}
+function renderActionInto(list, acts){
+  const st = stage(), n = nowN(), r = G.role, alive = aliveIds();
   const title = $("#actTitle"), vis = $("#visions"), ready = $("#ready");
-  acts.replaceChildren(); vis.hidden = true; ready.textContent = "";
+  vis.hidden = true; ready.textContent = "";
   $("#actHint").classList.remove("bad");
   if(!game || !G.phase){ title.textContent = ""; setHint(""); list.replaceChildren(); return; }
   const roleKnown = id => val(G.roles, id) || (r === "w" && val(G.pack, id) ? "w" : null);
