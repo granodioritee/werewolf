@@ -182,8 +182,12 @@ button.pr:disabled{cursor:default}
 details.rules{font-size:15px;color:var(--muted)}
 details.rules summary{cursor:pointer;color:var(--bone);font:700 13px var(--f-display);letter-spacing:.14em;text-transform:uppercase}
 details.rules ul{margin:10px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.credit{position:relative;z-index:1;text-align:center;font-size:13.5px;font-style:italic;color:var(--faint);padding-top:2px}
+.credit a{color:var(--muted)}
+.credit a:hover{color:var(--bone)}
 details.rules b{color:var(--bone)}
 </style>
+<script src="analytics.js"></script>
 </head>
 <body>
 <div class="flash" id="flash"></div>
@@ -282,11 +286,14 @@ details.rules b{color:var(--bone)}
       <li>Dead players watch in silence. No hints to the living!</li>
     </ul>
   </details>
+  <footer class="credit">Made by <a href="https://github.com/granodioritee" target="_blank" rel="noopener">granodioritee</a> · <a href="https://github.com/granodioritee/werewolf" target="_blank" rel="noopener" id="starLink">⭐ Star on GitHub</a></footer>
 </div>
 
 <script src="firebase-config.js"></script>
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+/* analytics.js defines gaEvent; if it's blocked, tracking quietly does nothing */
+const track = (name, params) => { try { if(window.gaEvent) window.gaEvent(name, params); } catch(e){} };
 const store = {
   get(k, d){ try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
   set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
@@ -481,6 +488,7 @@ async function joinRoom(c, create){
     F.onValue(R("game"), s => onGame(s.val())),
   ];
   S.join();
+  track(create ? "room_create" : "room_join");
   render();
 }
 
@@ -715,7 +723,8 @@ function startGame(){
     game:{ id, players:plist, wolves:k, size:n, day:cfg.day, extra:extra.join(""), by:uid, at:F.serverTimestamp() },
     [`deck/${id}`]: deck,
     [`phase/${id}`]: phaseFor(0, "deal", DEAL_MS),
-  }).catch(e => { console.error(e); $("#setupMsg").textContent = `Couldn't start (${errWhy(e)}). Try again.`; })
+  }).then(() => track("game_start", { players:n, wolves:k, roles:extra.join("") }))
+    .catch(e => { console.error(e); $("#setupMsg").textContent = `Couldn't start (${errWhy(e)}). Try again.`; })
     .finally(() => { $("#start").disabled = false; });
 }
 
@@ -747,7 +756,10 @@ function sideEffects(){
     if(!first){
       if(st === "night") S.howl();
       else if(st === "day") S.bell();
-      else if(st === "over") (G.over && G.role && G.over.winner === ROLE[G.role].team ? S.win : S.lose)();
+      else if(st === "over"){
+        (G.over && G.role && G.over.winner === ROLE[G.role].team ? S.win : S.lose)();
+        track("game_end", { winner:G.over ? G.over.winner : null, my_team_won:!!(G.over && G.role && G.over.winner === ROLE[G.role].team), nights:n, players:gameIds().length });
+      }
       else if(st === "hunt") S.thud();
     }
   }
@@ -1043,6 +1055,7 @@ function toggleRole(r){
   F.set(R("cfg"), cfg).catch(e => console.error(e));
 }
 $("#start").addEventListener("click", startGame);
+$("#starLink").addEventListener("click", () => track("github_click"));
 $("#rolecard").addEventListener("click", () => {
   ui.cardOpen = !ui.cardOpen; clearTimeout(ui.cardTimer);
   if(ui.cardOpen) ui.cardTimer = setTimeout(() => { ui.cardOpen = false; render(); }, 6000);
