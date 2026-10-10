@@ -118,10 +118,11 @@ body[data-phase="day"] .orb::after{transform:translate(40px,-40px)}
 .omen .rw{color:#F08A8F}.omen .rs{color:var(--seer)}.omen .rd{color:var(--doctor)}
 
 /* role card: face down until tapped, so nobody next to you sees it */
-.rolecard{position:relative;border-radius:16px;min-height:150px;cursor:pointer;perspective:900px;border:0;padding:0;background:none;color:inherit;text-align:left;width:100%}
-.rc-inner{position:relative;width:100%;min-height:150px;transition:transform .55s cubic-bezier(.3,.7,.2,1);transform-style:preserve-3d}
+.rolecard{position:relative;border-radius:16px;cursor:pointer;perspective:900px;border:0;padding:0;background:none;color:inherit;font:inherit;text-align:left;width:100%}
+/* both faces share one grid cell, so the card is as tall as its longer side */
+.rc-inner{position:relative;display:grid;width:100%;min-height:150px;transition:transform .55s cubic-bezier(.3,.7,.2,1);transform-style:preserve-3d}
 .rolecard.open .rc-inner{transform:rotateY(180deg)}
-.rc-face{position:absolute;inset:0;border-radius:16px;backface-visibility:hidden;-webkit-backface-visibility:hidden;padding:16px;display:flex;align-items:center;gap:16px;border:1px solid var(--line-hi)}
+.rc-face{grid-area:1/1;position:relative;border-radius:16px;backface-visibility:hidden;-webkit-backface-visibility:hidden;padding:16px;display:flex;align-items:center;gap:16px;border:1px solid var(--line-hi)}
 .rc-back{background:repeating-linear-gradient(135deg,rgba(255,255,255,.025) 0 8px,transparent 8px 16px),linear-gradient(160deg,#151A25,#090B10);justify-content:center;flex-direction:column;gap:6px}
 .rc-back b{font:700 14px var(--f-display);letter-spacing:.2em;text-transform:uppercase}
 .rc-back small{color:var(--muted);font-style:italic;font-size:14px}
